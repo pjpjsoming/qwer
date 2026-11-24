@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>교환 독서 프로그램</title>
+<style>
+:root {
+  --bg: #f4f6f8;
+  --surface: #ffffff;
+  --ink: #1b2430;
+  --muted: #5f6b79;
+  --line: #d8dee5;
+  --accent: #2f5d8a;
+  --accent-ink: #ffffff;
+  --danger: #b3261e;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12171d;
+    --surface: #1b222b;
+    --ink: #e8edf2;
+    --muted: #9aa6b4;
+    --line: #2d3743;
+    --accent: #7fa8d1;
+    --accent-ink: #12171d;
+    --danger: #f0867e;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12171d;
+  --surface: #1b222b;
+  --ink: #e8edf2;
+  --muted: #9aa6b4;
+  --line: #2d3743;
+  --accent: #7fa8d1;
+  --accent-ink: #12171d;
+  --danger: #f0867e;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Apple SD Gothic Neo", "Malgun Gothic", "Noto Sans KR", system-ui, sans-serif;
+  line-height: 1.6;
+}
+.page {
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: 32px 20px 48px;
+}
+h1 {
+  margin: 0 0 24px;
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.notice {
+  margin: -8px 0 16px;
+  padding: 8px 12px;
+  font-size: 0.88rem;
+  color: var(--muted);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+.notice[hidden] { display: none; }
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr);
+  gap: 20px;
+  align-items: start;
+}
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 20px;
+}
+h2 {
+  margin: 0 0 16px;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+.field { margin-bottom: 14px; }
+label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+input[type="text"],
+input[type="password"] {
+  width: 100%;
+  padding: 9px 10px;
+  font: inherit;
+  color: var(--ink);
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+input[type="text"]:focus-visible,
+input[type="password"]:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+button {
+  width: 100%;
+  margin-top: 6px;
+  padding: 10px 12px;
+  font: inherit;
+  font-weight: 700;
+  color: var(--accent-ink);
+  background: var(--accent);
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+.book-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.book {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-left: 4px solid var(--accent);
+  border-radius: 4px 8px 8px 4px;
+  background: var(--bg);
+}
+.book-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+}
+.book-status {
+  flex-shrink: 0;
+  padding: 1px 8px;
+  font-size: 0.8rem;
+  color: var(--accent);
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+}
+.book-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.book-meta {
+  margin: 2px 0 0;
+  font-size: 0.88rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+.book-actions { margin-top: 10px; }
+.request-button,
+.request-form button {
+  width: auto;
+  margin-top: 0;
+  padding: 6px 14px;
+  font-size: 0.9rem;
+}
+.request-form { margin-top: 10px; }
+.request-form input[type="text"],
+.request-form input[type="password"] { margin-bottom: 6px; }
+.return-button {
+  margin-left: 8px;
+  color: var(--accent);
+  background: transparent;
+  border: 1px solid var(--accent);
+}
+.delete-button {
+  margin-left: 8px;
+  color: var(--danger);
+  background: transparent;
+  border: 1px solid var(--danger);
+}
+.empty {
+  margin: 0;
+  color: var(--muted);
+}
+.error {
+  margin: 4px 0 0;
+  font-size: 0.85rem;
+  color: var(--danger);
+}
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(16px + env(safe-area-inset-top, 0px)) 16px calc(16px + env(safe-area-inset-bottom, 0px));
+  background: rgba(10, 16, 24, 0.5);
+}
+.confirm-overlay[hidden] { display: none; }
+.confirm-box {
+  width: 100%;
+  max-width: 360px;
+  padding: 20px;
+  background: var(--surface);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+.confirm-message {
+  margin: 0 0 16px;
+  overflow-wrap: anywhere;
+}
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.confirm-actions button {
+  width: auto;
+  margin-top: 0;
+  padding: 6px 16px;
+  font-size: 0.9rem;
+}
+.confirm-cancel {
+  color: var(--accent);
+  background: transparent;
+  border: 1px solid var(--accent);
+}
+/* 768px 미만(스마트폰): 등록 영역 위, 목록 영역 아래로 세로 배치 */
+@media (max-width: 767px) {
+  .layout { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 560px) {
+  .page { padding: 20px 10px 32px; }
+  .layout { gap: 10px; }
+  .panel { padding: 12px; }
+  h1 { font-size: 1.25rem; }
+}
+</style>
+</head>
+<body>
+<main class="page">
+  <h1>교환 독서 프로그램</h1>
+  <p class="notice" id="local-notice" hidden>임시 모드로 실행 중입니다. 변경한 내용은 이 화면에서만 보이고, 새로고침하면 처음 샘플 상태로 돌아갑니다.</p>
+
+  <div class="layout">
+    <section class="panel" aria-labelledby="register-title">
+      <h2 id="register-title">책 등록</h2>
+      <div class="field">
+        <label for="book-title">서명</label>
+        <input type="text" id="book-title" autocomplete="off">
+        <p class="error" id="err-title" role="alert" hidden></p>
+      </div>
+      <div class="field">
+        <label for="book-author">저자명</label>
+        <input type="text" id="book-author" autocomplete="off">
+        <p class="error" id="err-author" role="alert" hidden></p>
+      </div>
+      <div class="field">
+        <label for="book-owner">소유자 이름</label>
+        <input type="text" id="book-owner" autocomplete="off">
+        <p class="error" id="err-owner" role="alert" hidden></p>
+      </div>
+      <div class="field">
+        <label for="book-password">비밀번호 (책을 삭제할 때 필요합니다)</label>
+        <input type="password" id="book-password" autocomplete="new-password">
+        <p class="error" id="err-password" role="alert" hidden></p>
+      </div>
+      <p class="error" id="err-form" role="alert" hidden></p>
+      <button type="button" id="register-button">책 등록</button>
+    </section>
+
+    <section class="panel" aria-labelledby="list-title">
+      <h2 id="list-title">현재 등록된 책 목록</h2>
+      <div class="field">
+        <label for="search-input">책 검색</label>
+        <input type="text" id="search-input" placeholder="서명 또는 저자명 일부를 입력하세요" autocomplete="off">
+      </div>
+      <ul class="book-list" id="book-list"></ul>
+      <p class="empty" id="empty-message" hidden>아직 등록된 책이 없습니다.</p>
+    </section>
+  </div>
+</main>
+
+<div class="confirm-overlay" id="confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="confirm-message" hidden>
+  <div class="confirm-box">
+    <p class="confirm-message" id="confirm-message"></p>
+    <div class="confirm-actions">
+      <button type="button" class="confirm-cancel" id="confirm-cancel">취소</button>
+      <button type="button" id="confirm-ok">확인</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ---------- 데이터 ----------
+// 샘플 책 (임의 값). 공유 저장소를 쓸 수 없는 환경에서는 이 데이터로 임시 모드가 시작된다.
+var SAMPLE_BOOKS = [
+  { id: "sample1", title: "느린 오후의 독서", author: "김하늘", owner: "이서연", status: "교환 가능", createdAt: 3,
+    pwSalt: "smp1a", pwHash: "89a8fec42af27da384a54b9479db0d065e1a41cb05907a1cbeff90601cc71b6d" },
+  { id: "sample2", title: "도서관의 밤", author: "박민재", owner: "최지우", status: "교환 가능", createdAt: 2,
+    pwSalt: "smp2b", pwHash: "0fe84c984ff876a7c1b173457f46cc6471dde8bdf16a8aff547391b6fa1ca5b8" },
+  { id: "sample3", title: "작은 책방 이야기", author: "정유나", owner: "한도윤", status: "교환 가능", createdAt: 1,
+    pwSalt: "smp3c", pwHash: "d6a7e282d4bce0cfd309c144e8fba117e6e32748ff7909bc0dd5fa8d58cd08a8" }
+];
+
+var books = [];
+var db = null;            // 공유 저장소 (사용할 수 없으면 null)
+var loaded = false;
+var localMode = false;    // true이면 이 화면 안에서만 데이터를 다루는 임시 모드
+var localSeq = 0;
+var unsubscribe = null;
+var loadTimer = null;
+
+var openFormId = null;
+var draftName = "";
+var requestError = "";
+var requesting = false;
+var returning = false;
+var returnErrorId = null;
+var returnError = "";
+var deleteFormId = null;
+var deleteDraft = "";
+var deleteErrorId = null;
+var deleteError = "";
+var deleting = false;
+var confirmAction = null;
+
+function normalize(value) {
+  return value.trim().replace(/\s+/g, " ").toLowerCase();
+}
+
+function setError(id, message) {
+  var el = document.getElementById(id);
+  el.textContent = message;
+  el.hidden = !message;
+}
+
+// ---------- 비밀번호 해시 (SHA-256) ----------
+// 비밀번호 원문은 저장하지 않고, 책마다 다른 salt를 붙인 해시값만 저장한다.
+function sha256Hex(message) {
+  var bytes = new TextEncoder().encode(message);
+  var primes = [];
+  var n = 2;
+  while (primes.length < 64) {
+    var isPrime = true;
+    for (var d = 2; d * d <= n; d++) {
+      if (n % d === 0) { isPrime = false; break; }
+    }
+    if (isPrime) { primes.push(n); }
+    n += 1;
+  }
+  function frac(x) { return Math.floor((x - Math.floor(x)) * 4294967296) | 0; }
+  function rotr(x, k) { return (x >>> k) | (x << (32 - k)); }
+  var K = primes.map(function (p) { return frac(Math.cbrt(p)); });
+  var H = primes.slice(0, 8).map(function (p) { return frac(Math.sqrt(p)); });
+
+  var length = bytes.length;
+  var total = ((length + 9 + 63) >> 6) << 6;
+  var buffer = new Uint8Array(total);
+  buffer.set(bytes);
+  buffer[length] = 0x80;
+  var view = new DataView(buffer.buffer);
+  view.setUint32(total - 8, Math.floor((length * 8) / 4294967296));
+  view.setUint32(total - 4, (length * 8) >>> 0);
+
+  var w = new Array(64);
+  for (var off = 0; off < total; off += 64) {
+    var i;
+    for (i = 0; i < 16; i++) { w[i] = view.getInt32(off + i * 4); }
+    for (i = 16; i < 64; i++) {
+      var s0 = rotr(w[i - 15], 7) ^ rotr(w[i - 15], 18) ^ (w[i - 15] >>> 3);
+      var s1 = rotr(w[i - 2], 17) ^ rotr(w[i - 2], 19) ^ (w[i - 2] >>> 10);
+      w[i] = (w[i - 16] + s0 + w[i - 7] + s1) | 0;
+    }
+    var a = H[0], b = H[1], c = H[2], d2 = H[3], e = H[4], f = H[5], g = H[6], h = H[7];
+    for (i = 0; i < 64; i++) {
+      var S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
+      var ch = (e & f) ^ (~e & g);
+      var t1 = (h + S1 + ch + K[i] + w[i]) | 0;
+      var S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
+      var maj = (a & b) ^ (a & c) ^ (b & c);
+      var t2 = (S0 + maj) | 0;
+      h = g; g = f; f = e; e = (d2 + t1) | 0;
+      d2 = c; c = b; b = a; a = (t1 + t2) | 0;
+    }
+    H[0] = (H[0] + a) | 0; H[1] = (H[1] + b) | 0; H[2] = (H[2] + c) | 0; H[3] = (H[3] + d2) | 0;
+    H[4] = (H[4] + e) | 0; H[5] = (H[5] + f) | 0; H[6] = (H[6] + g) | 0; H[7] = (H[7] + h) | 0;
+  }
+  return H.map(function (x) { return ("00000000" + (x >>> 0).toString(16)).slice(-8); }).join("");
+}
+
+// ---------- 저장소 계층: 공유 저장소 또는 임시 모드 ----------
+function startLocalMode(keepCurrent) {
+  if (localMode) { return; }
+  localMode = true;
+  clearTimeout(loadTimer);
+  if (typeof unsubscribe === "function") {
+    try { unsubscribe(); } catch (e) {}
+  }
+  var base = (keepCurrent && books.length > 0) ? books : SAMPLE_BOOKS;
+  books = base.map(function (b) { return Object.assign({}, b); });
+  loaded = true;
+  document.getElementById("local-notice").hidden = false;
+  renderBooks();
+}
+
+function storeAdd(data) {
+  if (!localMode && db) {
+    return db.collection("books").add(data).catch(function () {
+      startLocalMode(true);
+      return storeAdd(data);
+    });
+  }
+  startLocalMode(true);
+  localSeq += 1;
+  books.unshift(Object.assign({ id: "local-" + localSeq }, data));
+  renderBooks();
+  return Promise.resolve();
+}
+
+function storeGet(id) {
+  if (!localMode && db) {
+    return db.collection("books").doc(id).get().then(function (snap) {
+      return snap.exists ? snap.data() : null;
+    }).catch(function () {
+      startLocalMode(true);
+      return storeGet(id);
+    });
+  }
+  var found = null;
+  books.forEach(function (b) { if (b.id === id) { found = b; } });
+  return Promise.resolve(found);
+}
+
+function storeUpdate(id, changes) {
+  if (!localMode && db) {
+    return db.collection("books").doc(id).update(changes).catch(function () {
+      startLocalMode(true);
+      return storeUpdate(id, changes);
+    });
+  }
+  books = books.map(function (b) {
+    return b.id === id ? Object.assign({}, b, changes) : b;
+  });
+  renderBooks();
+  return Promise.resolve();
+}
+
+function storeDelete(id) {
+  if (!localMode && db) {
+    return db.collection("books").doc(id).delete().catch(function () {
+      startLocalMode(true);
+      return storeDelete(id);
+    });
+  }
+  books = books.filter(function (b) { return b.id !== id; });
+  renderBooks();
+  return Promise.resolve();
+}
+
+// ---------- 화면 ----------
+function getVisibleBooks() {
+  var query = normalize(document.getElementById("search-input").value);
+  if (!query) { return books; }
+  return books.filter(function (book) {
+    return normalize(book.title).indexOf(query) !== -1 ||
+           normalize(book.author).indexOf(query) !== -1;
+  });
+}
+
+function renderBooks() {
+  var list = document.getElementById("book-list");
+  var empty = document.getElementById("empty-message");
+  var hadFocus = document.activeElement && document.activeElement.classList &&
+                 document.activeElement.classList.contains("request-input");
+  list.innerHTML = "";
+
+  var visible = getVisibleBooks();
+  visible.forEach(function (book) {
+    var item = document.createElement("li");
+    item.className = "book";
+
+    var title = document.createElement("p");
+    title.className = "book-title";
+    title.textContent = book.title;
+
+    var meta = document.createElement("p");
+    meta.className = "book-meta";
+    meta.textContent = "저자 " + book.author + " / 소유자 " + book.owner;
+
+    var head = document.createElement("div");
+    head.className = "book-head";
+    var status = document.createElement("span");
+    status.className = "book-status";
+    status.textContent = book.status;
+    head.appendChild(title);
+    head.appendChild(status);
+
+    item.appendChild(head);
+    item.appendChild(meta);
+    if (book.status === "신청 중" && book.requester) {
+      var requester = document.createElement("p");
+      requester.className = "book-meta";
+      requester.textContent = "신청자 " + book.requester;
+      item.appendChild(requester);
+    }
+    item.appendChild(buildActions(book));
+    list.appendChild(item);
+  });
+
+  if (hadFocus) {
+    var again = list.querySelector(".request-input");
+    if (again) {
+      again.focus();
+      again.setSelectionRange(again.value.length, again.value.length);
+    }
+  }
+
+  if (loaded && books.length > 0 && visible.length === 0) {
+    empty.textContent = "검색 결과가 없습니다.";
+  } else {
+    empty.textContent = loaded ? "아직 등록된 책이 없습니다." : "책 목록을 불러오는 중입니다.";
+  }
+  empty.hidden = visible.length > 0;
+}
+
+// ---------- 대여 신청 / 반납 완료 버튼 ----------
+function buildActions(book) {
+  var box = document.createElement("div");
+  box.className = "book-actions";
+
+  var button = document.createElement("button");
+  button.type = "button";
+  button.className = "request-button";
+  button.textContent = "대여 신청";
+  box.appendChild(button);
+
+  var returnButton = document.createElement("button");
+  returnButton.type = "button";
+  returnButton.className = "request-button return-button";
+  returnButton.textContent = "반납 완료";
+  returnButton.disabled = (book.status !== "신청 중") || returning;
+  returnButton.addEventListener("click", function () { returnBook(book); });
+  box.appendChild(returnButton);
+
+  var deleteButton = document.createElement("button");
+  deleteButton.type = "button";
+  deleteButton.className = "request-button delete-button";
+  deleteButton.textContent = "삭제";
+  deleteButton.disabled = deleting;
+  deleteButton.addEventListener("click", function () {
+    deleteFormId = (deleteFormId === book.id) ? null : book.id;
+    deleteDraft = "";
+    deleteErrorId = null;
+    deleteError = "";
+    openFormId = null;
+    draftName = "";
+    requestError = "";
+    renderBooks();
+    var foundInput = document.querySelector(".request-input");
+    if (foundInput) { foundInput.focus(); }
+  });
+  box.appendChild(deleteButton);
+
+  if (returnErrorId === book.id && returnError) {
+    var returnMessage = document.createElement("p");
+    returnMessage.className = "error";
+    returnMessage.setAttribute("role", "alert");
+    returnMessage.textContent = returnError;
+    box.appendChild(returnMessage);
+  }
+
+  if (deleteErrorId === book.id && deleteError) {
+    var deleteMessage = document.createElement("p");
+    deleteMessage.className = "error";
+    deleteMessage.setAttribute("role", "alert");
+    deleteMessage.textContent = deleteError;
+    box.appendChild(deleteMessage);
+  }
+
+  if (deleteFormId === book.id) {
+    var deleteForm = document.createElement("div");
+    deleteForm.className = "request-form";
+
+    var deleteLabel = document.createElement("label");
+    deleteLabel.setAttribute("for", "delete-password");
+    deleteLabel.textContent = "비밀번호";
+
+    var deleteInput = document.createElement("input");
+    deleteInput.type = "password";
+    deleteInput.id = "delete-password";
+    deleteInput.className = "request-input";
+    deleteInput.autocomplete = "off";
+    deleteInput.value = deleteDraft;
+    deleteInput.addEventListener("input", function () { deleteDraft = deleteInput.value; });
+
+    var deleteSend = document.createElement("button");
+    deleteSend.type = "button";
+    deleteSend.textContent = "삭제하기";
+    deleteSend.disabled = deleting;
+    deleteSend.addEventListener("click", function () { submitDelete(book); });
+
+    deleteForm.appendChild(deleteLabel);
+    deleteForm.appendChild(deleteInput);
+    deleteForm.appendChild(deleteSend);
+    box.appendChild(deleteForm);
+  }
+
+  if (book.status !== "교환 가능") {
+    button.disabled = true;
+    var note = document.createElement("p");
+    note.className = "book-meta";
+    note.textContent = "이미 신청 중인 책입니다.";
+    box.appendChild(note);
+    return box;
+  }
+
+  button.addEventListener("click", function () {
+    openFormId = (openFormId === book.id) ? null : book.id;
+    draftName = "";
+    requestError = "";
+    deleteFormId = null;
+    deleteDraft = "";
+    renderBooks();
+    var found = document.querySelector(".request-input");
+    if (found) { found.focus(); }
+  });
+
+  if (openFormId === book.id) {
+    var form = document.createElement("div");
+    form.className = "request-form";
+
+    var label = document.createElement("label");
+    label.setAttribute("for", "request-name");
+    label.textContent = "신청자 이름";
+
+    var input = document.createElement("input");
+    input.type = "text";
+    input.id = "request-name";
+    input.className = "request-input";
+    input.autocomplete = "off";
+    input.value = draftName;
+    input.addEventListener("input", function () { draftName = input.value; });
+
+    var send = document.createElement("button");
+    send.type = "button";
+    send.textContent = "신청하기";
+    send.disabled = requesting;
+    send.addEventListener("click", function () { submitRequest(book); });
+
+    form.appendChild(label);
+    form.appendChild(input);
+    if (requestError) {
+      var error = document.createElement("p");
+      error.className = "error";
+      error.setAttribute("role", "alert");
+      error.textContent = requestError;
+      form.appendChild(error);
+    }
+    form.appendChild(send);
+    box.appendChild(form);
+  }
+  return box;
+}
+
+function submitRequest(book) {
+  var name = draftName.trim();
+  if (requesting) { return; }
+  if (!name) {
+    requestError = "신청자 이름을 입력해 주세요.";
+    renderBooks();
+    return;
+  }
+  if (normalize(name) === normalize(book.owner)) {
+    requestError = "본인이 등록한 책에는 대여 신청을 할 수 없습니다.";
+    renderBooks();
+    return;
+  }
+  askConfirm(
+    "‘" + book.title + "’을(를) ‘" + name + "’ 이름으로 대여 신청합니다. 진행할까요?",
+    function () { performRequest(book, name); }
+  );
+}
+
+function performRequest(book, name) {
+  requesting = true;
+  requestError = "";
+  storeGet(book.id).then(function (current) {
+    if (!current || current.status !== "교환 가능") {
+      throw new Error("taken");
+    }
+    return storeUpdate(book.id, { status: "신청 중", requester: name });
+  }).then(function () {
+    openFormId = null;
+    draftName = "";
+  }).catch(function (e) {
+    requestError = (e && e.message === "taken")
+      ? "이미 다른 사람이 신청한 책입니다."
+      : "신청하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+  }).then(function () {
+    requesting = false;
+    renderBooks();
+  });
+}
+
+function returnBook(book) {
+  if (returning) { return; }
+  askConfirm(
+    "‘" + book.title + "’의 반납을 완료 처리합니다. " +
+      (book.requester ? "신청자 이름(" + book.requester + ")이 삭제되고 " : "") +
+      "‘교환 가능’ 상태로 돌아갑니다. 진행할까요?",
+    function () { performReturn(book); }
+  );
+}
+
+function performReturn(book) {
+  returning = true;
+  returnErrorId = null;
+  returnError = "";
+  storeGet(book.id).then(function (current) {
+    if (!current || current.status !== "신청 중") {
+      throw new Error("not-requested");
+    }
+    return storeUpdate(book.id, { status: "교환 가능", requester: "" });
+  }).catch(function (e) {
+    returnErrorId = book.id;
+    returnError = (e && e.message === "not-requested")
+      ? "이미 반납 처리된 책입니다."
+      : "반납 처리하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+  }).then(function () {
+    returning = false;
+    renderBooks();
+  });
+}
+
+// ---------- 도서 삭제 ----------
+function submitDelete(book) {
+  if (deleting) { return; }
+  var typed = deleteDraft;
+  if (!typed) {
+    showAlert("비밀번호를 다시 입력해 주세요.");
+    return;
+  }
+  deleting = true;
+  deleteErrorId = null;
+  deleteError = "";
+  storeGet(book.id).then(function (current) {
+    if (!current) { throw new Error("gone"); }
+    if (!current.pwHash) { throw new Error("nopw"); }
+    if (sha256Hex((current.pwSalt || "") + ":" + typed) !== current.pwHash) {
+      throw new Error("wrong");
+    }
+    askConfirm(
+      "\u2018" + book.title + "\u2019을(를) 삭제합니다. 삭제하면 되돌릴 수 없습니다. 진행할까요?",
+      function () { performDelete(book); }
+    );
+  }).catch(function (e) {
+    var code = e && e.message;
+    if (code === "wrong") {
+      deleteDraft = "";
+      showAlert("비밀번호를 다시 입력해 주세요.");
+      return;
+    }
+    deleteErrorId = book.id;
+    deleteError = code === "nopw" ? "비밀번호가 설정되지 않은 책이라 삭제할 수 없습니다."
+      : code === "gone" ? "이미 삭제된 책입니다."
+      : "삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+  }).then(function () {
+    deleting = false;
+    renderBooks();
+  });
+}
+
+function performDelete(book) {
+  deleting = true;
+  deleteErrorId = null;
+  deleteError = "";
+  storeGet(book.id).then(function (current) {
+    if (!current) { throw new Error("gone"); }
+    return storeDelete(book.id);
+  }).then(function () {
+    deleteFormId = null;
+    deleteDraft = "";
+    if (openFormId === book.id) { openFormId = null; draftName = ""; }
+  }).catch(function (e) {
+    deleteErrorId = book.id;
+    deleteError = (e && e.message === "gone")
+      ? "이미 삭제된 책입니다."
+      : "삭제하지 못했습니다. 잠시 후 다시 시도해 주세요.";
+  }).then(function () {
+    deleting = false;
+    renderBooks();
+  });
+}
+
+// ---------- 도서 등록 ----------
+function registerBook() {
+  var titleInput = document.getElementById("book-title");
+  var authorInput = document.getElementById("book-author");
+  var ownerInput = document.getElementById("book-owner");
+  var title = titleInput.value.trim();
+  var author = authorInput.value.trim();
+  var owner = ownerInput.value.trim();
+  var passwordInput = document.getElementById("book-password");
+  var password = passwordInput.value;
+
+  ["err-title", "err-author", "err-owner", "err-password", "err-form"].forEach(function (id) {
+    setError(id, "");
+  });
+
+  var valid = true;
+  if (!title) { setError("err-title", "서명을 입력해 주세요."); valid = false; }
+  if (!author) { setError("err-author", "저자명을 입력해 주세요."); valid = false; }
+  if (!owner) { setError("err-owner", "소유자 이름을 입력해 주세요."); valid = false; }
+  if (!password) { setError("err-password", "비밀번호를 입력해 주세요."); valid = false; }
+  if (!valid) { return; }
+
+  var duplicated = books.some(function (book) {
+    return normalize(book.title) === normalize(title) &&
+           normalize(book.author) === normalize(author) &&
+           normalize(book.owner) === normalize(owner);
+  });
+  if (duplicated) {
+    setError("err-form", "서명, 저자명, 소유자가 모두 같은 책이 이미 등록되어 있습니다. 입력한 내용을 확인해 주세요.");
+    return;
+  }
+
+  var registerButton = document.getElementById("register-button");
+  registerButton.disabled = true;
+  var salt = Math.random().toString(36).slice(2, 10);
+  storeAdd({
+    title: title,
+    author: author,
+    owner: owner,
+    status: "교환 가능",
+    createdAt: Date.now(),
+    pwSalt: salt,
+    pwHash: sha256Hex(salt + ":" + password)
+  }).then(function () {
+    titleInput.value = "";
+    authorInput.value = "";
+    ownerInput.value = "";
+    passwordInput.value = "";
+    showAlert("등록이 완료되었습니다.");
+  }).catch(function () {
+    setError("err-form", "등록하지 못했습니다. 잠시 후 다시 시도해 주세요.");
+  }).then(function () {
+    registerButton.disabled = false;
+  });
+}
+
+// ---------- 확인 팝업 ----------
+function showAlert(message) {
+  confirmAction = null;
+  document.getElementById("confirm-message").textContent = message;
+  document.getElementById("confirm-cancel").hidden = true;
+  document.getElementById("confirm-overlay").hidden = false;
+  document.getElementById("confirm-ok").focus();
+}
+
+function askConfirm(message, onConfirm) {
+  confirmAction = onConfirm;
+  document.getElementById("confirm-cancel").hidden = false;
+  document.getElementById("confirm-message").textContent = message;
+  document.getElementById("confirm-overlay").hidden = false;
+  document.getElementById("confirm-ok").focus();
+}
+
+function closeConfirm() {
+  confirmAction = null;
+  document.getElementById("confirm-overlay").hidden = true;
+}
+
+// ---------- 연결 ----------
+// 파일로 내려받아 열거나 직접 호스팅한 경우에는 Firebase(Firestore)에 연결하고,
+// claude.ai 아티팩트 안에서는 아티팩트 공유 저장소에 연결한다.
+// 둘 다 연결할 수 없으면 임시 모드로 시작한다.
+var firebaseConfig = {
+  apiKey: "AIzaSyCEE_UhYdeoDHoOXjchXzzEWayn0q0O_4Q",
+  authDomain: "qwer-7e320.firebaseapp.com",
+  projectId: "qwer-7e320",
+  storageBucket: "qwer-7e320.firebasestorage.app",
+  messagingSenderId: "312924346449",
+  appId: "1:312924346449:web:10a8840423ab35f8b64070",
+  measurementId: "G-CQDE07P5NQ"
+};
+
+function loadScript(src) {
+  return new Promise(function (resolve, reject) {
+    var el = document.createElement("script");
+    el.src = src;
+    el.onload = resolve;
+    el.onerror = function () { reject(new Error("load")); };
+    document.head.appendChild(el);
+  });
+}
+
+function subscribeBooks() {
+  unsubscribe = db.collection("books").orderBy("createdAt", "desc").onSnapshot(function (snap) {
+    if (localMode) { return; }
+    loaded = true;
+    clearTimeout(loadTimer);
+    books = snap.docs.map(function (d) {
+      return Object.assign({ id: d.id }, d.data());
+    });
+    renderBooks();
+  }, function () {
+    startLocalMode(false);
+  });
+}
+
+function connectFirebase() {
+  var base = "https://cdn.jsdelivr.net/npm/firebase@10.12.2/";
+  loadScript(base + "firebase-app-compat.js").then(function () {
+    return loadScript(base + "firebase-firestore-compat.js");
+  }).then(function () {
+    if (localMode) { return; }
+    if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+    db = firebase.firestore();
+    subscribeBooks();
+  }).catch(function () {
+    startLocalMode(false);
+  });
+}
+
+function connectDb() {
+  if (!window.claude || !window.claude.use) {
+    connectFirebase();
+    return;
+  }
+  window.claude.use("db").then(function (store) {
+    if (localMode) { return; }
+    if (!store) { startLocalMode(false); return; }
+    db = store;
+    subscribeBooks();
+  }).catch(function () {
+    startLocalMode(false);
+  });
+}
+
+document.getElementById("register-button").addEventListener("click", registerBook);
+document.getElementById("search-input").addEventListener("input", function () {
+  renderBooks();
+});
+document.getElementById("confirm-ok").addEventListener("click", function () {
+  var action = confirmAction;
+  closeConfirm();
+  if (action) { action(); }
+});
+document.getElementById("confirm-cancel").addEventListener("click", closeConfirm);
+document.addEventListener("keydown", function (e) {
+  if (e.key === "Escape" && !document.getElementById("confirm-overlay").hidden) {
+    closeConfirm();
+  }
+});
+
+renderBooks();
+// 공유 저장소 응답이 10초 안에 없으면 임시 모드로 전환한다.
+loadTimer = setTimeout(function () {
+  if (!loaded) { startLocalMode(false); }
+}, 10000);
+connectDb();
+</script>
+</body>
+</html>
